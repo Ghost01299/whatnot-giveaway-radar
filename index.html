@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -5,55 +6,126 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Whatnot Giveaway Radar</title>
 <style>
+* { box-sizing:border-box }
 body {
-  background: #10111b;
-  color: white;
-  font-family: Arial, sans-serif;
-  padding: 20px;
+  margin:0;padding:22px;
+  background:#10111b;color:white;
+  font-family:Arial,sans-serif;
 }
-h1 { color: #a78bfa; }
+h1 {color:#a78bfa}
 .card {
-  background: #202133;
-  padding: 18px;
-  border-radius: 14px;
-  margin: 15px 0;
+  background:#202133;padding:18px;
+  border-radius:15px;margin:15px 0;
+}
+input {
+  width:100%;padding:13px;margin:7px 0;
+  border-radius:9px;border:0;
 }
 button {
-  background: #8b5cf6;
-  color: white;
-  border: 0;
-  padding: 13px;
-  border-radius: 9px;
-  width: 100%;
+  width:100%;padding:13px;margin-top:8px;
+  background:#8b5cf6;color:white;
+  border:0;border-radius:9px;font-weight:bold;
 }
+.small {color:#aaa;font-size:13px}
+.item {
+  background:#303147;padding:12px;
+  margin:10px 0;border-radius:10px;
+}
+a {color:#c4b5fd}
 </style>
 </head>
 <body>
 
 <h1>🎁 Giveaway Radar</h1>
-<p>Whatnot monitoring dashboard</p>
+<p class="small">Whatnot monitoring dashboard</p>
 
 <div class="card">
-  <h3>Statut du scanner</h3>
-  <p id="status">En attente</p>
-  <button onclick="startScanner()">Démarrer le scanner</button>
+<h3>📊 Tableau de bord</h3>
+<p>Lives suivis : <b id="lives">0</b></p>
+<p>Giveaways repérés : <b id="count">0</b></p>
 </div>
 
 <div class="card">
-  <h3>Giveaways détectés</h3>
-  <h2 id="count">0</h2>
-  <p id="result">Aucune détection pour le moment.</p>
+<h3>➕ Ajouter un live</h3>
+<input id="seller" placeholder="Nom du vendeur">
+<input id="url" placeholder="Lien du live (facultatif)">
+<button onclick="addLive()">Ajouter le live</button>
+</div>
+
+<div class="card">
+<h3>📡 Lives suivis</h3>
+<div id="liveList">Aucun live ajouté.</div>
+</div>
+
+<div class="card">
+<h3>🎉 Giveaway repéré</h3>
+<input id="giveaway" placeholder="Nom du vendeur ou du live">
+<button onclick="addGiveaway()">Enregistrer la détection</button>
+</div>
+
+<div class="card">
+<h3>🕒 Historique</h3>
+<div id="history">Aucune détection.</div>
 </div>
 
 <script>
-function startScanner() {
-  document.getElementById("status").textContent =
-    "Interface de démonstration activée";
+let lives = JSON.parse(localStorage.getItem("lives") || "[]");
+let history = JSON.parse(localStorage.getItem("history") || "[]");
 
-  document.getElementById("result").textContent =
-    "En attente d'une source de données autorisée.";
+function save() {
+ localStorage.setItem("lives",JSON.stringify(lives));
+ localStorage.setItem("history",JSON.stringify(history));
+ render();
 }
-</script>
 
+function addLive() {
+ const seller=document.getElementById("seller").value.trim();
+ const url=document.getElementById("url").value.trim();
+ if(!seller) return alert("Entre un nom de vendeur.");
+ if(url && !/^https:\/\/(www\.)?whatnot\.com\//i.test(url))
+ return alert("Entre un lien Whatnot valide.");
+ lives.push({seller,url});
+ document.getElementById("seller").value="";
+ document.getElementById("url").value="";
+ save();
+}
+
+function addGiveaway() {
+ const name=document.getElementById("giveaway").value.trim();
+ if(!name) return alert("Entre un nom de vendeur ou de live.");
+ history.unshift({name,date:new Date().toLocaleString("fr-FR")});
+ document.getElementById("giveaway").value="";
+ save();
+}
+
+function render() {
+ document.getElementById("lives").textContent=lives.length;
+ document.getElementById("count").textContent=history.length;
+ document.getElementById("liveList").innerHTML=
+ lives.length ? lives.map((l,i)=>
+ `<div class="item"><b>${escapeHTML(l.seller)}</b>
+ ${l.url ? `<br><a href="${escapeHTML(l.url)}" target="_blank" rel="noopener">Ouvrir le live</a>`:""}
+ <button onclick="removeLive(${i})">Supprimer</button></div>`
+ ).join("") : "Aucun live ajouté.";
+ document.getElementById("history").innerHTML=
+ history.length ? history.map(h=>
+ `<div class="item">🎁 ${escapeHTML(h.name)}<br><span class="small">${escapeHTML(h.date)}</span></div>`
+ ).join("") : "Aucune détection.";
+}
+
+function escapeHTML(s) {
+ return String(s).replace(/[&<>"']/g,c=>({
+ "&":"&amp;","<":"&lt;",">":"&gt;",
+ '"':"&quot;","'":"&#39;"
+ })[c]);
+}
+
+function removeLive(i) {
+ lives.splice(i,1);
+ save();
+}
+
+render();
+</script>
 </body>
 </html>
