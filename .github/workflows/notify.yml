@@ -1,0 +1,19 @@
+
+name: Test notification
+
+on:
+  workflow_dispatch:
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send notification
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: |
+          curl --fail \
+            -H "Title: Giveaway Radar" \
+            -H "Priority: default" \
+            -d "Ton scanner Whatnot est connecté !" \
+            "https://ntfy.sh/${NTFY_TOPIC}"
